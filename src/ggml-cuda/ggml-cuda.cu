@@ -6639,7 +6639,9 @@ static enum ggml_status ggml_backend_cuda_graph_compute(ggml_backend_t backend, 
     ggml_cuda_graph_set_enabled(cuda_ctx, graph_key);
 
     ggml_cuda_graph * graph = cuda_ctx->cuda_graph(graph_key);
-    if (graph->is_enabled()) {
+    // Only graphs that run again unchanged carry an id (reused decode graphs, scheduler splits);
+    // capturing every rebuilt graph kept growing VRAM with graph-cut segments.
+    if (graph->is_enabled() && cgraph->uid != 0) {
         const bool graph_compatible = ggml_cuda_graph_check_compability(cgraph);
         if (graph_compatible) {
             const bool properties_changed = ggml_cuda_graph_update_required(cuda_ctx, cgraph);
